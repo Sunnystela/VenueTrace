@@ -1,4 +1,6 @@
 importScripts("../sources/dblp.js");
+importScripts("../matching/normalize.js");
+importScripts("../matching/paper-matcher.js");
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type !== "PAPER_METADATA") {
@@ -17,7 +19,10 @@ chrome.runtime.onMessage.addListener((message) => {
         hits,
       });
 
-      return { received: true, dblpHitCount: hits.length };
+      const match = findMatchingPaper(message.paper, hits);
+      console.log("VenueTrace match:", match);
+
+      return { received: true, dblpHitCount: hits.length, match };
     })
     .catch((error) => {
       console.error("DBLP request error:", error);
