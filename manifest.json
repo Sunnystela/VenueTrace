@@ -5,7 +5,12 @@
   "background": {
     "service_worker": "src/background/service-worker.js"
   },
-  "host_permissions": ["https://dblp.org/*"],
+  "host_permissions": [
+    "https://dblp.org/*",
+    "https://api2.openreview.net/*",
+    "https://api.crossref.org/*",
+    "https://api.openalex.org/*"
+  ],
   "content_scripts": [
     {
       "matches": ["https://arxiv.org/abs/*"],

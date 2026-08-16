@@ -23,3 +23,60 @@ function findMatchingPaper(paper, hits) {
     }) ?? null
   );
 }
+
+function findMatchingOpenReviewPaper(paper, notes) {
+  const normalizedTitle = normalizeText(paper.title ?? "");
+  const normalizedAuthors = paper.authors.map(normalizeText);
+
+  return (
+    notes.find((note) => {
+      const title = getOpenReviewValue(note.content?.title) ?? "";
+      const authors = getOpenReviewAuthors(note);
+      const titleMatches = normalizeText(title) === normalizedTitle;
+      const authorMatches = normalizedAuthors.some((author) =>
+        authors.map(normalizeText).includes(author),
+      );
+
+      return titleMatches && authorMatches;
+    }) ?? null
+  );
+}
+
+function findMatchingCrossrefPaper(paper, works) {
+  const normalizedTitle = normalizeText(paper.title ?? "");
+  const normalizedAuthors = paper.authors.map(normalizeText);
+
+  return (
+    works.find((work) => {
+      const title = work.title?.[0] ?? "";
+      const authors = (work.author ?? []).map((author) =>
+        [author.given, author.family].filter(Boolean).join(" "),
+      );
+      const titleMatches = normalizeText(title) === normalizedTitle;
+      const authorMatches = normalizedAuthors.some((author) =>
+        authors.map(normalizeText).includes(author),
+      );
+
+      return titleMatches && authorMatches;
+    }) ?? null
+  );
+}
+
+function findMatchingOpenAlexPaper(paper, works) {
+  const normalizedTitle = normalizeText(paper.title ?? "");
+  const normalizedAuthors = paper.authors.map(normalizeText);
+
+  return (
+    works.find((work) => {
+      const titleMatches = normalizeText(work.title ?? "") === normalizedTitle;
+      const authors = (work.authorships ?? [])
+        .map((authorship) => authorship.author?.display_name)
+        .filter(Boolean);
+      const authorMatches = normalizedAuthors.some((author) =>
+        authors.map(normalizeText).includes(author),
+      );
+
+      return titleMatches && authorMatches;
+    }) ?? null
+  );
+}
