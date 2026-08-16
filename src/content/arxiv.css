@@ -6,3 +6,30 @@
   color: #1f2328;
   font-weight: 600;
 }
+
+.venuetrace-result[data-confidence="high"] {
+  border-left-color: #1a7f37;
+  background: #dafbe1;
+}
+
+.venuetrace-result[data-confidence="none"] {
+  border-left-color: #656d76;
+  background: #f6f8fa;
+}
+
+.venuetrace-result ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-weight: 400;
+}
+
+.venuetrace-result a {
+  color: #0969da;
+}
+
+.venuetrace-errors {
+  display: block;
+  margin-top: 0.5rem;
+  color: #656d76;
+  font-weight: 400;
+}

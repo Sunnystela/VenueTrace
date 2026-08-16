@@ -9,12 +9,12 @@ function getDblpAuthors(hit) {
 
 function findMatchingPaper(paper, hits) {
   const normalizedTitle = normalizeText(paper.title ?? "");
-  const normalizedAuthors = paper.authors.map(normalizeText);
+  const normalizedAuthors = paper.authors.map(normalizeAuthorName);
 
   return (
     hits.find((hit) => {
       const titleMatches = normalizeText(hit.info?.title ?? "") === normalizedTitle;
-      const dblpAuthors = getDblpAuthors(hit).map(normalizeText);
+      const dblpAuthors = getDblpAuthors(hit).map(normalizeAuthorName);
       const authorMatches = normalizedAuthors.some((author) =>
         dblpAuthors.includes(author),
       );
@@ -26,7 +26,7 @@ function findMatchingPaper(paper, hits) {
 
 function findMatchingOpenReviewPaper(paper, notes) {
   const normalizedTitle = normalizeText(paper.title ?? "");
-  const normalizedAuthors = paper.authors.map(normalizeText);
+  const normalizedAuthors = paper.authors.map(normalizeAuthorName);
 
   return (
     notes.find((note) => {
@@ -34,7 +34,7 @@ function findMatchingOpenReviewPaper(paper, notes) {
       const authors = getOpenReviewAuthors(note);
       const titleMatches = normalizeText(title) === normalizedTitle;
       const authorMatches = normalizedAuthors.some((author) =>
-        authors.map(normalizeText).includes(author),
+        authors.map(normalizeAuthorName).includes(author),
       );
 
       return titleMatches && authorMatches;
@@ -44,7 +44,7 @@ function findMatchingOpenReviewPaper(paper, notes) {
 
 function findMatchingCrossrefPaper(paper, works) {
   const normalizedTitle = normalizeText(paper.title ?? "");
-  const normalizedAuthors = paper.authors.map(normalizeText);
+  const normalizedAuthors = paper.authors.map(normalizeAuthorName);
 
   return (
     works.find((work) => {
@@ -54,7 +54,7 @@ function findMatchingCrossrefPaper(paper, works) {
       );
       const titleMatches = normalizeText(title) === normalizedTitle;
       const authorMatches = normalizedAuthors.some((author) =>
-        authors.map(normalizeText).includes(author),
+        authors.map(normalizeAuthorName).includes(author),
       );
 
       return titleMatches && authorMatches;
@@ -64,7 +64,7 @@ function findMatchingCrossrefPaper(paper, works) {
 
 function findMatchingOpenAlexPaper(paper, works) {
   const normalizedTitle = normalizeText(paper.title ?? "");
-  const normalizedAuthors = paper.authors.map(normalizeText);
+  const normalizedAuthors = paper.authors.map(normalizeAuthorName);
 
   return (
     works.find((work) => {
@@ -73,7 +73,7 @@ function findMatchingOpenAlexPaper(paper, works) {
         .map((authorship) => authorship.author?.display_name)
         .filter(Boolean);
       const authorMatches = normalizedAuthors.some((author) =>
-        authors.map(normalizeText).includes(author),
+        authors.map(normalizeAuthorName).includes(author),
       );
 
       return titleMatches && authorMatches;

@@ -14,7 +14,7 @@
   "content_scripts": [
     {
       "matches": ["https://arxiv.org/abs/*"],
-      "js": ["src/content/arxiv.js"],
+      "js": ["src/ui/evidence-panel.js", "src/content/arxiv.js"],
       "css": ["src/content/arxiv.css"]
     }
   ]

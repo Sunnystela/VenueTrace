@@ -9,6 +9,8 @@ importScripts("../sources/proceedings/pmlr.js");
 importScripts("../sources/proceedings/neurips.js");
 importScripts("../sources/proceedings/cvf.js");
 importScripts("../sources/proceedings/acl.js");
+importScripts("../decision/confidence.js");
+importScripts("../decision/classify.js");
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type !== "PAPER_METADATA") {
@@ -90,6 +92,9 @@ async function collectSourceResults(paper) {
   ].filter(Boolean);
 
   console.log("Proceedings evidence:", result.proceedings);
+
+  result.decision = integrateEvidence(result);
+  console.log("Integrated evidence:", result.decision);
 
   return result;
 }

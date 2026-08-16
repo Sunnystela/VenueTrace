@@ -20,19 +20,7 @@ chrome.runtime
   .then((response) => {
     console.log("VenueTrace response:", response);
 
-    if (!response.received) {
-      resultElement.textContent = `VenueTrace: 조회 실패 (${response.error})`;
-      return;
-    }
-
-    if (!response.match) {
-      resultElement.textContent = "VenueTrace: 일치하는 DBLP 논문을 찾지 못했습니다.";
-      return;
-    }
-
-    const venue = response.match.info?.venue ?? "venue 정보 없음";
-    const year = response.match.info?.year ?? "연도 정보 없음";
-    resultElement.textContent = `VenueTrace: ${venue} (${year})`;
+    renderEvidencePanel(resultElement, response.decision);
   })
   .catch((error) => {
     resultElement.textContent = `VenueTrace: 메시지 오류 (${error.message})`;
