@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "VenueTrace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "background": {
     "service_worker": "src/background/service-worker.js"
   },
@@ -11,10 +11,15 @@
     "https://api.crossref.org/*",
     "https://api.openalex.org/*"
   ],
+  "permissions": ["downloads"],
   "content_scripts": [
     {
       "matches": ["https://arxiv.org/abs/*"],
-      "js": ["src/ui/evidence-panel.js", "src/content/arxiv.js"],
+      "js": [
+        "src/code-links/find-links.js",
+        "src/ui/evidence-panel.js",
+        "src/content/arxiv.js"
+      ],
       "css": ["src/content/arxiv.css"]
     }
   ]

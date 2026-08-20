@@ -11,14 +11,37 @@ importScripts("../sources/proceedings/cvf.js");
 importScripts("../sources/proceedings/acl.js");
 importScripts("../decision/confidence.js");
 importScripts("../decision/classify.js");
+importScripts("../download/filename.js");
 
 chrome.runtime.onMessage.addListener((message) => {
-  if (message.type !== "PAPER_METADATA") {
-    return;
+  if (message.type === "PAPER_METADATA") {
+    return collectSourceResults(message.paper);
   }
 
-  return collectSourceResults(message.paper);
+  if (message.type === "DOWNLOAD_PDF") {
+    return downloadArxivPdf(message);
+  }
 });
+
+async function downloadArxivPdf({ url, title, arxivId }) {
+  const pdfUrl = new URL(url);
+  const isArxivPdf =
+    pdfUrl.protocol === "https:" &&
+    pdfUrl.hostname === "arxiv.org" &&
+    pdfUrl.pathname.startsWith("/pdf/");
+
+  if (!isArxivPdf) {
+    throw new Error("Only arXiv PDF URLs are allowed.");
+  }
+
+  const downloadId = await chrome.downloads.download({
+    url: pdfUrl.href,
+    filename: createPdfFilename(title, arxivId),
+    saveAs: true,
+  });
+
+  return { downloadStarted: true, downloadId };
+}
 
 async function collectSourceResults(paper) {
   const result = { received: true };

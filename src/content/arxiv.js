@@ -5,6 +5,10 @@ const authors = [
 const doi = document.querySelector('meta[name="citation_doi"]')?.content ?? null;
 const arxivId =
   document.querySelector('meta[name="citation_arxiv_id"]')?.content ?? null;
+const pdfUrl =
+  document.querySelector('meta[name="citation_pdf_url"]')?.content ??
+  (arxivId ? `https://arxiv.org/pdf/${arxivId}` : null);
+const projectLinks = findProjectLinks();
 
 const paper = { title, authors, doi, arxivId };
 const resultElement = document.createElement("div");
@@ -20,7 +24,18 @@ chrome.runtime
   .then((response) => {
     console.log("VenueTrace response:", response);
 
-    renderEvidencePanel(resultElement, response.decision);
+    renderEvidencePanel(resultElement, response.decision, projectLinks);
+
+    if (pdfUrl) {
+      renderPdfDownloadButton(resultElement, () =>
+        chrome.runtime.sendMessage({
+          type: "DOWNLOAD_PDF",
+          url: pdfUrl,
+          title,
+          arxivId,
+        }),
+      );
+    }
   })
   .catch((error) => {
     resultElement.textContent = `VenueTrace: 메시지 오류 (${error.message})`;

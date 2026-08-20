@@ -84,12 +84,11 @@ function decidePublicationStatus(evidence, errors, successfulSourceCount) {
   const officialEvidence = evidence.find((item) => item.official);
   const generalEvidence = evidence.filter((item) => !item.official);
   const preferredSources = ["DBLP", "Crossref", "OpenAlex", "OpenReview"];
-  const primaryEvidence =
-    officialEvidence ??
+  const metadataEvidence =
     preferredSources
       .map((source) => evidence.find((item) => item.source === source))
-      .find(Boolean) ??
-    null;
+      .find((item) => item?.venue) ?? null;
+  const primaryEvidence = metadataEvidence ?? officialEvidence ?? null;
 
   let status;
 
@@ -124,7 +123,15 @@ function decidePublicationStatus(evidence, errors, successfulSourceCount) {
     status,
     statusLabel: labels[status],
     summary: summaries[status],
-    venue: primaryEvidence?.venue ?? null,
-    year: primaryEvidence?.year ?? null,
+    venue: normalizeVenueName(primaryEvidence?.venue),
+    year: metadataEvidence?.year ?? officialEvidence?.year ?? null,
   };
+}
+
+function normalizeVenueName(venue) {
+  if (typeof venue !== "string") {
+    return null;
+  }
+
+  return venue.toUpperCase() === "NIPS" ? "NeurIPS" : venue;
 }

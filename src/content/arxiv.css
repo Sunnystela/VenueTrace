@@ -36,6 +36,34 @@
   font-size: 0.8rem;
 }
 
+.venuetrace-venue {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.venuetrace-projects {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #d0d7de;
+}
+
+.venuetrace-download {
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #0969da;
+  border-radius: 0.35rem;
+  background: #0969da;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.venuetrace-download:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
 .venuetrace-errors {
   display: block;
   margin-top: 0.5rem;
