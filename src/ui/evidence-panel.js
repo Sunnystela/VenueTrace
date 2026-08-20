@@ -73,8 +73,10 @@ function renderEvidencePanel(
         .join(" · ");
       const text = details ? `${evidence.source}: ${details}` : evidence.source;
       const url = getSafeHttpUrl(evidence.url);
-      const evidenceType = evidence.official
-        ? "공식 proceedings"
+      const evidenceType = evidence.kind === "official_decision"
+        ? "공식 채택 결정"
+        : evidence.official
+          ? "공식 proceedings"
         : evidence.kind === "publication"
           ? "출판 근거"
           : evidence.kind === "submission"

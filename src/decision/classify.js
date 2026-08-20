@@ -27,16 +27,22 @@ function integrateEvidence(result) {
   }
 
   if (result.openReviewMatch) {
+    const openReviewVenue =
+      getOpenReviewValue(result.openReviewMatch.content?.venue) ??
+      getOpenReviewValue(result.openReviewMatch.content?.venueid);
+    const officialDecision = parseOfficialOpenReviewVenue(
+      result.openReviewMatch,
+      openReviewVenue,
+    );
+
     evidence.push({
       source: "OpenReview",
-      venue:
-        result.openReviewMatch.content?.venue?.value ??
-        result.openReviewMatch.content?.venueid?.value ??
-        null,
-      year: null,
+      venue: officialDecision?.venue ?? openReviewVenue ?? null,
+      year: officialDecision?.year ?? null,
+      position: officialDecision?.position ?? null,
       url: `https://openreview.net/forum?id=${result.openReviewMatch.forum}`,
-      official: false,
-      kind: "submission",
+      official: Boolean(officialDecision),
+      kind: officialDecision ? "official_decision" : "submission",
     });
   }
 
@@ -145,7 +151,7 @@ function decidePublicationStatus(evidence, errors, successfulSourceCount) {
     inconclusive: "판단 보류",
   };
   const summaries = {
-    confirmed: "공식 proceedings 수록 근거를 확인했습니다.",
+    confirmed: "공식 학회 수록 또는 채택 근거를 확인했습니다.",
     supported: "여러 출처에서 일치하는 출판 정보를 확인했습니다.",
     candidate: "출판 후보를 찾았지만 추가 확인이 필요합니다.",
     not_found: "현재 연결된 출처에서 출판 정보를 확인하지 못했습니다.",
@@ -179,4 +185,31 @@ function normalizePublicationVenue(venue) {
 
   const preprintSources = /^(arxiv|corr)$|cornell university/i;
   return preprintSources.test(venue.trim()) ? null : venue;
+}
+
+function parseOfficialOpenReviewVenue(note, venueText) {
+  if (typeof venueText !== "string" || typeof note.domain !== "string") {
+    return null;
+  }
+
+  const match = venueText
+    .trim()
+    .match(/^(.+?)\s+(20\d{2})\s+(poster|oral|spotlight)$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const venue = match[1].trim();
+  const year = Number.parseInt(match[2], 10);
+  const expectedDomain = `${venue}.cc/${year}/Conference`;
+
+  if (note.domain.toLowerCase() !== expectedDomain.toLowerCase()) {
+    return null;
+  }
+
+  const position =
+    match[3][0].toUpperCase() + match[3].slice(1).toLowerCase();
+
+  return { venue, year, position };
 }
