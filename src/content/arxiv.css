@@ -48,6 +48,28 @@
   border-top: 1px solid #d0d7de;
 }
 
+.venuetrace-repository {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0 0;
+  padding: 0.6rem;
+  border: 1px solid #d0d7de;
+  border-radius: 0.35rem;
+  background: #ffffff;
+  font-weight: 400;
+}
+
+.venuetrace-repository dt {
+  font-weight: 700;
+}
+
+.venuetrace-repository dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .venuetrace-download {
   margin-top: 0.75rem;
   padding: 0.45rem 0.75rem;

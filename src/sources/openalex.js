@@ -1,7 +1,7 @@
 async function searchOpenAlex(title, apiKey) {
   const url = new URL("https://api.openalex.org/works");
-  url.searchParams.set("search", title);
-  url.searchParams.set("per-page", "10");
+  url.searchParams.set("search", `"${title}"`);
+  url.searchParams.set("per-page", "25");
   url.searchParams.set("api_key", apiKey);
 
   const response = await fetch(url);

@@ -12,6 +12,7 @@ importScripts("../sources/proceedings/acl.js");
 importScripts("../decision/confidence.js");
 importScripts("../decision/classify.js");
 importScripts("../download/filename.js");
+importScripts("../code-links/github.js");
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "PAPER_METADATA") {
@@ -107,9 +108,19 @@ async function collectSourceResults(paper) {
     openAlex: result.openAlexMatch,
   };
 
+  let officialNeuripsPaper = null;
+
+  try {
+    officialNeuripsPaper = await searchOfficialNeuripsPaper(paper);
+    console.log("Official NeurIPS result:", officialNeuripsPaper);
+  } catch (error) {
+    result.neuripsError = error.message;
+    console.error("NeurIPS request error:", error);
+  }
+
   result.proceedings = [
     findPmlrEvidence(matchedRecords),
-    findNeuripsEvidence(matchedRecords),
+    officialNeuripsPaper ?? findNeuripsEvidence(matchedRecords),
     findCvfEvidence(matchedRecords),
     findAclEvidence(matchedRecords),
   ].filter(Boolean);
@@ -119,5 +130,12 @@ async function collectSourceResults(paper) {
   result.decision = integrateEvidence(result);
   console.log("Integrated evidence:", result.decision);
 
+  try {
+    result.repositories = await findRepositoryEvidence(paper);
+    console.log("Repository evidence:", result.repositories);
+  } catch (error) {
+    result.repositoryError = error.message;
+    console.error("Repository lookup error:", error);
+  }
   return result;
 }

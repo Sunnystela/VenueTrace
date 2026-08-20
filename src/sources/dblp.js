@@ -1,8 +1,15 @@
 async function searchDblp(title) {
   const url = new URL("https://dblp.org/search/publ/api");
-  url.searchParams.set("q", title);
+  const exactQuery = title
+    .split(/\s+/)
+    .map((word) => word.replace(/[^\p{L}\p{N}-]/gu, ""))
+    .filter(Boolean)
+    .map((word) => `${word}$`)
+    .join(" ");
+
+  url.searchParams.set("q", exactQuery || title);
   url.searchParams.set("format", "json");
-  url.searchParams.set("h", "10");
+  url.searchParams.set("h", "50");
 
   const response = await fetch(url);
 

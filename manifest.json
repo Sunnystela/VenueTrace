@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "VenueTrace",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "background": {
     "service_worker": "src/background/service-worker.js"
   },
@@ -9,7 +9,9 @@
     "https://dblp.org/*",
     "https://api2.openreview.net/*",
     "https://api.crossref.org/*",
-    "https://api.openalex.org/*"
+    "https://api.openalex.org/*",
+    "https://api.github.com/*",
+    "https://neurips.cc/*"
   ],
   "permissions": ["downloads"],
   "content_scripts": [

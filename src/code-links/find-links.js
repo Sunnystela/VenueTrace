@@ -25,7 +25,15 @@ function findProjectLinks(root = document) {
       }
 
       seenUrls.add(url.href);
-      return [{ url: url.href, host: url.hostname }];
+      return [
+        {
+          url: url.href,
+          host: url.hostname,
+          foundAt: link.closest?.(".comments")
+            ? "arXiv Comments"
+            : "arXiv Abstract",
+        },
+      ];
     } catch {
       return [];
     }

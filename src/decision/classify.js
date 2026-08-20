@@ -5,6 +5,7 @@ function integrateEvidence(result) {
     ["OpenReview", result.openReviewError],
     ["Crossref", result.crossrefError],
     ["OpenAlex", result.openAlexError],
+    ["NeurIPS", result.neuripsError],
   ]
     .filter(([, error]) => Boolean(error))
     .map(([source, message]) => ({ source, message }));
@@ -15,10 +16,13 @@ function integrateEvidence(result) {
 
     evidence.push({
       source: "DBLP",
-      venue: result.match.info?.venue ?? null,
+      venue: normalizePublicationVenue(result.match.info?.venue),
       year: result.match.info?.year ?? null,
       url: dblpUrl ?? (dblpKey ? `https://dblp.org/rec/${dblpKey}` : null),
       official: false,
+      kind: normalizePublicationVenue(result.match.info?.venue)
+        ? "publication"
+        : "metadata",
     });
   }
 
@@ -32,32 +36,53 @@ function integrateEvidence(result) {
       year: null,
       url: `https://openreview.net/forum?id=${result.openReviewMatch.forum}`,
       official: false,
+      kind: "submission",
     });
   }
 
   if (result.crossrefMatch) {
+    const crossrefVenue = normalizePublicationVenue(
+      result.crossrefMatch["container-title"]?.[0],
+    );
+
     evidence.push({
       source: "Crossref",
-      venue: result.crossrefMatch["container-title"]?.[0] ?? null,
+      venue: crossrefVenue,
       year: result.crossrefMatch.published?.["date-parts"]?.[0]?.[0] ?? null,
       url: result.crossrefMatch.URL ?? null,
       official: false,
+      kind: crossrefVenue ? "publication" : "metadata",
     });
   }
 
   if (result.openAlexMatch) {
+    const openAlexVenue = [
+      result.openAlexMatch.primary_location?.source?.display_name,
+      ...(result.openAlexMatch.locations ?? []).map(
+        (location) => location.source?.display_name,
+      ),
+    ]
+      .map(normalizePublicationVenue)
+      .find(Boolean) ?? null;
+
     evidence.push({
       source: "OpenAlex",
-      venue:
-        result.openAlexMatch.primary_location?.source?.display_name ?? null,
+      venue: openAlexVenue,
       year: result.openAlexMatch.publication_year ?? null,
       url: result.openAlexMatch.id ?? null,
       official: false,
+      kind: openAlexVenue ? "publication" : "metadata",
     });
   }
 
   for (const proceeding of result.proceedings ?? []) {
-    evidence.push({ ...proceeding, venue: proceeding.source, year: null, official: true });
+    evidence.push({
+      ...proceeding,
+      venue: proceeding.venue ?? proceeding.source,
+      year: proceeding.year ?? null,
+      official: true,
+      kind: "official",
+    });
   }
 
   const successfulSourceCount = [
@@ -66,15 +91,23 @@ function integrateEvidence(result) {
     result.crossrefHitCount,
     result.openAlexHitCount,
   ].filter(Number.isInteger).length;
+  const publicationEvidence = evidence.filter(
+    (item) => item.official || item.kind === "publication",
+  );
   const decision = decidePublicationStatus(
-    evidence,
+    publicationEvidence,
     errors,
     successfulSourceCount,
   );
 
+  if (publicationEvidence.length === 0 && evidence.length > 0) {
+    decision.summary =
+      "논문 레코드는 찾았지만 학회 수록 정보는 확인하지 못했습니다.";
+  }
+
   return {
     ...decision,
-    confidence: calculateConfidence(evidence),
+    confidence: calculateConfidence(publicationEvidence),
     evidence,
     errors,
   };
@@ -125,6 +158,7 @@ function decidePublicationStatus(evidence, errors, successfulSourceCount) {
     summary: summaries[status],
     venue: normalizeVenueName(primaryEvidence?.venue),
     year: metadataEvidence?.year ?? officialEvidence?.year ?? null,
+    position: primaryEvidence?.position ?? officialEvidence?.position ?? null,
   };
 }
 
@@ -133,5 +167,16 @@ function normalizeVenueName(venue) {
     return null;
   }
 
-  return venue.toUpperCase() === "NIPS" ? "NeurIPS" : venue;
+  return /^(nips|neural information processing systems)$/i.test(venue.trim())
+    ? "NeurIPS"
+    : venue;
+}
+
+function normalizePublicationVenue(venue) {
+  if (typeof venue !== "string") {
+    return null;
+  }
+
+  const preprintSources = /^(arxiv|corr)$|cornell university/i;
+  return preprintSources.test(venue.trim()) ? null : venue;
 }

@@ -1,4 +1,9 @@
-function renderEvidencePanel(container, decision, projectLinks = []) {
+function renderEvidencePanel(
+  container,
+  decision,
+  repositories = [],
+  repositoryError = null,
+) {
   container.replaceChildren();
   container.dataset.confidence = decision.confidence;
 
@@ -24,14 +29,33 @@ function renderEvidencePanel(container, decision, projectLinks = []) {
     container.append(venue);
   }
 
+  if (decision.position) {
+    const position = document.createElement("div");
+    position.className = "venuetrace-position";
+    position.textContent = `발표 형태: ${decision.position}`;
+    container.append(position);
+  }
+
   if (decision.evidence.length > 0) {
+    const evidenceTitle = document.createElement("strong");
     const list = document.createElement("ul");
+    evidenceTitle.textContent = "검색된 metadata 및 출판 근거";
+    container.append(evidenceTitle);
 
     for (const evidence of decision.evidence) {
       const item = document.createElement("li");
-      const details = [evidence.venue, evidence.year].filter(Boolean).join(" · ");
+      const details = [evidence.venue, evidence.year, evidence.position]
+        .filter(Boolean)
+        .join(" · ");
       const text = details ? `${evidence.source}: ${details}` : evidence.source;
       const url = getSafeHttpUrl(evidence.url);
+      const evidenceType = evidence.official
+        ? "공식 proceedings"
+        : evidence.kind === "publication"
+          ? "출판 근거"
+          : evidence.kind === "submission"
+            ? "submission 레코드"
+            : "metadata 레코드";
 
       item.append(text);
 
@@ -45,9 +69,7 @@ function renderEvidencePanel(container, decision, projectLinks = []) {
         item.append(link);
       }
 
-      if (evidence.official) {
-        item.append(" (공식 proceedings)");
-      }
+      item.append(` (${evidenceType})`);
 
       list.append(item);
     }
@@ -64,18 +86,22 @@ function renderEvidencePanel(container, decision, projectLinks = []) {
     container.append(errors);
   }
 
-  if (projectLinks.length > 0) {
+  {
     const projectSection = document.createElement("div");
     const projectTitle = document.createElement("strong");
-    const projectList = document.createElement("ul");
 
     projectSection.className = "venuetrace-projects";
-    projectTitle.textContent = "프로젝트 링크";
+    projectTitle.textContent = repositories.some(
+      (repository) => repository.classification !== "official",
+    )
+      ? "저장소 검색 후보"
+      : "저장소 정보";
+    projectSection.append(projectTitle);
 
-    for (const project of projectLinks) {
-      const item = document.createElement("li");
+    for (const repository of repositories) {
+      const card = document.createElement("dl");
       const link = document.createElement("a");
-      const url = getSafeHttpUrl(project.url);
+      const url = getSafeHttpUrl(repository.url);
 
       if (!url) {
         continue;
@@ -84,14 +110,51 @@ function renderEvidencePanel(container, decision, projectLinks = []) {
       link.href = url;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
-      link.textContent = project.host;
-      item.append(link);
-      projectList.append(item);
+      link.textContent = url;
+      card.className = "venuetrace-repository";
+      appendRepositoryField(card, "저장소 URL", link);
+      appendRepositoryField(card, "공식성 분류", repository.classificationLabel);
+      appendRepositoryField(card, "발견 위치", repository.foundAt);
+      appendRepositoryField(card, "판단 근거", repository.reason);
+      projectSection.append(card);
     }
 
-    projectSection.append(projectTitle, projectList);
+    if (repositories.length === 0 && !repositoryError) {
+      const emptyCard = document.createElement("dl");
+      emptyCard.className = "venuetrace-repository";
+      appendRepositoryField(emptyCard, "저장소 URL", "찾지 못함");
+      appendRepositoryField(emptyCard, "공식성 분류", "판단 불가");
+      appendRepositoryField(
+        emptyCard,
+        "발견 위치",
+        "arXiv Comments/Abstract 및 GitHub 저장소 검색",
+      );
+      appendRepositoryField(
+        emptyCard,
+        "판단 근거",
+        "직접 링크와 제목 검색에서 저장소 후보가 발견되지 않았습니다.",
+      );
+      projectSection.append(emptyCard);
+    }
+
+    if (repositoryError) {
+      const error = document.createElement("small");
+      error.className = "venuetrace-errors";
+      error.textContent = `저장소 확인 실패: ${repositoryError}`;
+      projectSection.append(error);
+    }
+
     container.append(projectSection);
   }
+}
+
+function appendRepositoryField(container, label, value) {
+  const term = document.createElement("dt");
+  const description = document.createElement("dd");
+
+  term.textContent = label;
+  description.append(value);
+  container.append(term, description);
 }
 
 function renderPdfDownloadButton(container, onDownload) {
