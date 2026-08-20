@@ -27,6 +27,15 @@
   color: #0969da;
 }
 
+.venuetrace-status {
+  display: inline-block;
+  margin-right: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #ddf4ff;
+  font-size: 0.8rem;
+}
+
 .venuetrace-errors {
   display: block;
   margin-top: 0.5rem;

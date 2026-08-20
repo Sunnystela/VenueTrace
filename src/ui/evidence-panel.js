@@ -2,9 +2,17 @@ function renderEvidencePanel(container, decision) {
   container.replaceChildren();
   container.dataset.confidence = decision.confidence;
 
-  const summary = document.createElement("strong");
-  summary.textContent = `VenueTrace: ${decision.summary}`;
-  container.append(summary);
+  const heading = document.createElement("div");
+  const title = document.createElement("strong");
+  const status = document.createElement("span");
+  const summary = document.createElement("span");
+
+  title.textContent = "VenueTrace";
+  status.className = "venuetrace-status";
+  status.textContent = decision.statusLabel;
+  summary.textContent = decision.summary;
+  heading.append(title, " ", status, " ", summary);
+  container.append(heading);
 
   if (decision.evidence.length > 0) {
     const list = document.createElement("ul");
@@ -15,15 +23,16 @@ function renderEvidencePanel(container, decision) {
       const text = details ? `${evidence.source}: ${details}` : evidence.source;
       const url = getSafeHttpUrl(evidence.url);
 
+      item.append(text);
+
       if (url) {
         const link = document.createElement("a");
         link.href = url;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.textContent = text;
+        link.textContent = `${new URL(url).hostname} 열기`;
+        item.append(" · ");
         item.append(link);
-      } else {
-        item.textContent = text;
       }
 
       if (evidence.official) {

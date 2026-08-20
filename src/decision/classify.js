@@ -10,11 +10,14 @@ function integrateEvidence(result) {
     .map(([source, message]) => ({ source, message }));
 
   if (result.match) {
+    const dblpUrl = result.match.info?.url;
+    const dblpKey = result.match.info?.key;
+
     evidence.push({
       source: "DBLP",
       venue: result.match.info?.venue ?? null,
       year: result.match.info?.year ?? null,
-      url: result.match.info?.ee ?? result.match.info?.url ?? null,
+      url: dblpUrl ?? (dblpKey ? `https://dblp.org/rec/${dblpKey}` : null),
       official: false,
     });
   }
@@ -57,13 +60,71 @@ function integrateEvidence(result) {
     evidence.push({ ...proceeding, venue: proceeding.source, year: null, official: true });
   }
 
-  const confidence = calculateConfidence(evidence);
+  const successfulSourceCount = [
+    result.dblpHitCount,
+    result.openReviewHitCount,
+    result.crossrefHitCount,
+    result.openAlexHitCount,
+  ].filter(Number.isInteger).length;
+  const decision = decidePublicationStatus(
+    evidence,
+    errors,
+    successfulSourceCount,
+  );
+
+  return {
+    ...decision,
+    confidence: calculateConfidence(evidence),
+    evidence,
+    errors,
+  };
+}
+
+function decidePublicationStatus(evidence, errors, successfulSourceCount) {
+  const officialEvidence = evidence.find((item) => item.official);
+  const generalEvidence = evidence.filter((item) => !item.official);
+  const preferredSources = ["DBLP", "Crossref", "OpenAlex", "OpenReview"];
+  const primaryEvidence =
+    officialEvidence ??
+    preferredSources
+      .map((source) => evidence.find((item) => item.source === source))
+      .find(Boolean) ??
+    null;
+
+  let status;
+
+  if (officialEvidence) {
+    status = "confirmed";
+  } else if (generalEvidence.length >= 2) {
+    status = "supported";
+  } else if (generalEvidence.length === 1) {
+    status = "candidate";
+  } else if (successfulSourceCount === 0 && errors.length > 0) {
+    status = "inconclusive";
+  } else {
+    status = "not_found";
+  }
+
+  const labels = {
+    confirmed: "공식 수록 확인",
+    supported: "출판 정보 확인",
+    candidate: "출판 후보",
+    not_found: "정보 미확인",
+    inconclusive: "판단 보류",
+  };
   const summaries = {
-    high: "공식 proceedings 수록 근거를 찾았습니다.",
-    medium: "여러 학술 데이터 출처에서 일치 논문을 찾았습니다.",
-    low: "한 개 학술 데이터 출처에서 일치 논문을 찾았습니다.",
-    none: "현재 확인 가능한 출판 근거를 찾지 못했습니다.",
+    confirmed: "공식 proceedings 수록 근거를 확인했습니다.",
+    supported: "여러 출처에서 일치하는 출판 정보를 확인했습니다.",
+    candidate: "출판 후보를 찾았지만 추가 확인이 필요합니다.",
+    not_found: "현재 연결된 출처에서 출판 정보를 확인하지 못했습니다.",
+    inconclusive: "출처 조회에 실패하여 출판 여부를 판단할 수 없습니다.",
   };
 
-  return { confidence, summary: summaries[confidence], evidence, errors };
+  return {
+    status,
+    statusLabel: labels[status],
+    summary: summaries[status],
+    venue: primaryEvidence?.venue ?? null,
+    year: primaryEvidence?.year ?? null,
+  };
 }
