@@ -7,40 +7,64 @@ function renderEvidencePanel(
   container.replaceChildren();
   container.dataset.confidence = decision.confidence;
 
-  const heading = document.createElement("div");
+  const heading = document.createElement("header");
   const title = document.createElement("strong");
   const status = document.createElement("span");
-  const summary = document.createElement("span");
+  const description = document.createElement("p");
 
-  title.textContent = `VenueTrace v${chrome.runtime.getManifest().version}`;
+  heading.className = "venuetrace-header";
+  title.className = "venuetrace-brand";
+  title.textContent = "VenueTrace";
   status.className = "venuetrace-status";
   status.textContent = decision.statusLabel;
-  summary.textContent = decision.summary;
-  heading.append(title, " ", status, " ", summary);
+  description.className = "venuetrace-summary";
+  description.textContent = decision.summary;
+  heading.append(title, status, description);
   container.append(heading);
 
-  if (decision.venue) {
-    const venue = document.createElement("div");
-    const venueLabel =
-      decision.status === "confirmed" ? "확인된 학회" : "후보 학회";
-    const year = decision.year ? ` (${decision.year})` : "";
-    venue.className = "venuetrace-venue";
-    venue.textContent = `${venueLabel}: ${decision.venue}${year}`;
-    container.append(venue);
-  }
+  if (decision.venue || decision.position) {
+    const verdict = document.createElement("div");
 
-  if (decision.position) {
-    const position = document.createElement("div");
-    position.className = "venuetrace-position";
-    position.textContent = `발표 형태: ${decision.position}`;
-    container.append(position);
+    verdict.className = "venuetrace-verdict";
+
+    if (decision.venue) {
+      const venue = document.createElement("div");
+      const label = document.createElement("span");
+      const value = document.createElement("strong");
+      const venueLabel =
+        decision.status === "confirmed" ? "확인된 학회" : "후보 학회";
+      const year = decision.year ? ` (${decision.year})` : "";
+
+      venue.className = "venuetrace-verdict-item";
+      label.textContent = venueLabel;
+      value.textContent = `${decision.venue}${year}`;
+      venue.append(label, value);
+      verdict.append(venue);
+    }
+
+    if (decision.position) {
+      const position = document.createElement("div");
+      const label = document.createElement("span");
+      const value = document.createElement("strong");
+
+      position.className = "venuetrace-verdict-item";
+      label.textContent = "발표 형태";
+      value.textContent = decision.position;
+      position.append(label, value);
+      verdict.append(position);
+    }
+
+    container.append(verdict);
   }
 
   if (decision.evidence.length > 0) {
-    const evidenceTitle = document.createElement("strong");
+    const evidenceSection = document.createElement("details");
+    const evidenceTitle = document.createElement("summary");
     const list = document.createElement("ul");
-    evidenceTitle.textContent = "검색된 metadata 및 출판 근거";
-    container.append(evidenceTitle);
+
+    evidenceSection.className = "venuetrace-details";
+    evidenceTitle.textContent = `출판 근거 및 metadata ${decision.evidence.length}개`;
+    evidenceSection.append(evidenceTitle);
 
     for (const evidence of decision.evidence) {
       const item = document.createElement("li");
@@ -74,7 +98,8 @@ function renderEvidencePanel(
       list.append(item);
     }
 
-    container.append(list);
+    evidenceSection.append(list);
+    container.append(evidenceSection);
   }
 
   if (decision.errors.length > 0) {
@@ -87,15 +112,16 @@ function renderEvidencePanel(
   }
 
   {
-    const projectSection = document.createElement("div");
-    const projectTitle = document.createElement("strong");
+    const projectSection = document.createElement("details");
+    const projectTitle = document.createElement("summary");
 
     projectSection.className = "venuetrace-projects";
-    projectTitle.textContent = repositories.some(
+    const projectLabel = repositories.some(
       (repository) => repository.classification !== "official",
     )
       ? "저장소 검색 후보"
       : "저장소 정보";
+    projectTitle.textContent = `${projectLabel} ${repositories.length}개`;
     projectSection.append(projectTitle);
 
     for (const repository of repositories) {
